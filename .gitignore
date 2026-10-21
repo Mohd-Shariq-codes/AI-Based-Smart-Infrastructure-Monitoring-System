@@ -1,0 +1,52 @@
+﻿# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+ai_venv/
+venv/
+
+# Secrets
+.env
+
+# Training dataset
+datasets/
+
+# Ignore training output files
+runs/*
+
+# Keep the path to the required trained model
+!runs/segment/
+runs/segment/*
+!runs/segment/ai_models/
+runs/segment/ai_models/*
+!runs/segment/ai_models/crack_seg/
+runs/segment/ai_models/crack_seg/*
+!runs/segment/ai_models/crack_seg/weights/
+runs/segment/ai_models/crack_seg/weights/*
+!runs/segment/ai_models/crack_seg/weights/best.pt
+# Generated AI analysis images
+static/uploads/analysis_results/
+
+# Editor and operating system files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local database and uploaded inspection images
+infrastructure.db
+static/uploads/inspection_images/
+
+# Old template backups
+templates/*.bak
+
+# Extra dependency backup
+requirements-minimal-backup.txt
+
+# Local testing files not required by the app
+test.py
+bus.jpg
+
+# Pretrained model files not used by the current application
+yolo26n.pt
+yolo26n-seg.pt

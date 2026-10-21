@@ -1,0 +1,1332 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Infrastructure Monitoring</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            flex-shrink: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            margin-left: 0;
+            width: auto;
+        }
+
+        /* AI image analysis */
+        .ai-analysis-button {
+            display: block;
+            width: 100%;
+            margin-top: 14px;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .ai-analysis-button:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+
+        .ai-analysis-button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .ai-result {
+            margin-top: 20px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .ai-result[hidden] {
+            display: none;
+        }
+
+        .ai-result h3 {
+            margin: 0 0 12px;
+            font-size: 17px;
+        }
+
+        .ai-result-message {
+            margin: 0 0 14px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #334155;
+        }
+
+        .ai-result-images {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .ai-result-image-card {
+            min-width: 0;
+        }
+
+        .ai-result-image-card p {
+            margin: 0 0 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .ai-result-image-card img {
+            display: block;
+            width: 100%;
+            max-height: 280px;
+            object-fit: contain;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .ai-detection-list {
+            margin: 14px 0 0;
+            padding-left: 20px;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #334155;
+        }
+
+        .ai-result-note {
+            margin: 14px 0 0;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #64748b;
+        }
+
+        .ai-error {
+            color: #b91c1c;
+        }
+
+        .ai-success {
+            color: #166534;
+        }
+
+        .ai-loading {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .ai-loading[hidden] {
+            display: none;
+        }
+/* AI Analysis History */
+.ai-history-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.ai-history-card {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.ai-history-card h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.ai-history-meta {
+    margin: 6px 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.ai-history-count {
+    display: inline-block;
+    margin: 8px 0;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.ai-history-images {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.ai-history-images p {
+    margin: 0 0 6px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ai-history-images img {
+    display: block;
+    width: 100%;
+    height: 140px;
+    object-fit: contain;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.ai-history-detections {
+    margin: 12px 0 0;
+    padding-left: 20px;
+    color: #334155;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.ai-history-empty {
+    padding: 20px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.ai-history-refresh {
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+}
+
+.ai-history-refresh:hover {
+    background: #f1f5f9;
+}
+
+@media (max-width: 800px) {
+    .ai-history-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .ai-history-images img {
+        height: 110px;
+    }
+}
+        @media (max-width: 600px) {
+            .ai-result-images {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- Sidebar -->
+        <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-box">AI</div>
+            <div class="logo-text">
+                <h2>Smart Infra</h2>
+                <p>Monitoring System</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Main navigation">
+            <a href="/" class="nav-item active" aria-current="page"><span class="nav-icon">DB</span><span>Dashboard</span></a>
+            <a href="/infrastructure" class="nav-item"><span class="nav-icon">IN</span><span>Infrastructure</span></a>
+            <a href="/inspection" class="nav-item"><span class="nav-icon">IS</span><span>Inspection</span></a>
+            <a href="/alerts" class="nav-item"><span class="nav-icon">AL</span><span>Alerts</span></a>
+            <a href="/reports" class="nav-item"><span class="nav-icon">RP</span><span>Reports</span></a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="system-status">
+                <span class="online-dot"></span>
+                <div>
+                    <strong>System Online</strong>
+                    <small>Monitoring services active</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <p class="welcome">Welcome back 👋</p>
+                <h1>🏠 Infrastructure Dashboard</h1>
+            </div>
+
+            <div class="topbar-right">
+                <div class="notification"
+                     title="Critical infrastructure count">
+                    🔔
+                    <span id="notificationCount">0</span>
+                </div>
+
+                <div class="profile">
+                    <div class="profile-circle">U</div>
+                    <div>
+                        <strong>Project User</strong>
+                        <small>Administrator</small>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+
+        <!-- Database Status -->
+        <p id="dashboardMessage"
+           role="status"
+           style="margin-bottom: 16px; color: #64748b;">
+            Loading dashboard data...
+        </p>
+
+
+        <!-- Overview Cards -->
+        <section class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-icon blue">&#x1F3E2;</div>
+                <div>
+                    <p>Total Structures</p>
+                    <h2 id="totalStructures">—</h2>
+                    <small>Registered infrastructure</small>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon green">✓</div>
+                <div>
+                    <p>Healthy Structures</p>
+                    <h2 id="healthyStructures">—</h2>
+                    <small id="healthyPercentage">Calculating...</small>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon orange">⚠️</div>
+                <div>
+                    <p>Needs Inspection</p>
+                    <h2 id="needsInspection">—</h2>
+                    <small>Requires attention</small>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon red">!</div>
+                <div>
+                    <p>Critical Alerts</p>
+                    <h2 id="criticalStructures">—</h2>
+                    <small id="warningCount">Warnings: —</small>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- Main Dashboard Grid -->
+        <section class="dashboard-grid">
+
+            <!-- Recent Inspections -->
+            <div class="panel">
+
+                <div class="panel-header">
+                    <div>
+                        <h2>Recent Inspections</h2>
+                        <p>Latest saved inspection records</p>
+                    </div>
+
+                    <a href="/inspection" class="view-button">
+                        View All
+                    </a>
+                </div>
+
+                <div class="inspection-list" id="recentInspections">
+                    <p style="padding: 16px;">Loading inspections...</p>
+                </div>
+
+            </div>
+
+
+            <!-- AI Inspection -->
+            <div class="panel quick-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <h2>AI Inspection</h2>
+                        <p>Infrastructure image analysis</p>
+                    </div>
+
+                    <div class="ai-icon">AI</div>
+                </div>
+
+                <div class="upload-box">
+
+                    <div class="upload-icon">📷</div>
+
+                    <h3>Upload Inspection Image</h3>
+
+                    <p>
+                        Select a wall, pillar, building or infrastructure
+                        image for AI-assisted crack detection.
+                    </p>
+
+                    <input
+                        type="file"
+                        id="inspectionImage"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        hidden
+                    >
+
+                    <label for="inspectionImage"
+                           class="upload-button"
+                           style="cursor: pointer;">
+                        Choose Image
+                    </label>
+
+                    <p id="uploadMessage"
+                       role="status"
+                       aria-live="polite"
+                       style="font-size: 13px; margin-top: 12px;">
+                        Supported formats: JPG, PNG and WEBP. Maximum 5 MB.
+                    </p>
+
+                    <!-- Selected Image Preview -->
+                    <div id="imagePreviewContainer"
+                         style="display: none; margin-top: 16px;">
+
+                        <img
+                            id="imagePreview"
+                            alt="Selected infrastructure image preview"
+                            style="
+                                display: block;
+                                width: 100%;
+                                max-height: 220px;
+                                object-fit: contain;
+                                border-radius: 10px;
+                                margin-bottom: 12px;
+                            "
+                        >
+
+                        <button
+                            type="button"
+                            id="removeImageButton"
+                            class="upload-button"
+                            style="cursor: pointer; border: none;"
+                        >
+                            Remove Image
+                        </button>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        id="analyzeImageButton"
+                        class="ai-analysis-button"
+                        disabled
+                    >
+                        Analyze Image
+                    </button>
+
+                    <p id="analysisLoading"
+                       class="ai-loading"
+                       role="status"
+                       aria-live="polite"
+                       hidden>
+                        AI is analyzing your image. Please wait...
+                    </p>
+
+                    <!-- AI Result -->
+                    <div id="aiResult"
+                         class="ai-result"
+                         aria-live="polite"
+                         hidden>
+
+                        <h3>AI Analysis Result</h3>
+
+                        <p id="aiResultMessage"
+                           class="ai-result-message"></p>
+
+                        <div id="aiResultImages"
+                             class="ai-result-images"
+                             hidden>
+
+                            <div class="ai-result-image-card">
+                                <p>Original Image</p>
+                                <img id="originalResultImage"
+                                     alt="Original uploaded infrastructure image">
+                            </div>
+
+                            <div class="ai-result-image-card">
+                                <p>AI Detection Result</p>
+                                <img id="annotatedResultImage"
+                                     alt="Infrastructure image with AI predictions marked">
+                            </div>
+
+                        </div>
+
+                        <ul id="aiDetectionList"
+                            class="ai-detection-list"
+                            hidden>
+                        </ul>
+
+                        <p class="ai-result-note">
+                            This is an AI-assisted visual screening result,
+                            not a structural safety certification. A qualified
+                            professional should assess suspected damage.
+                        </p>
+
+                    </div>
+
+                    <a href="/inspection"
+                       class="view-button"
+                       style="display: inline-block; margin-top: 12px;">
+                        Open Inspection
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Recent AI Analysis History -->
+<section class="panel" style="margin-top: 24px;">
+
+    <div class="panel-header">
+        <div>
+            <h2>Recent AI Analysis History</h2>
+            <p>Previously analyzed infrastructure images</p>
+        </div>
+
+        <button
+            type="button"
+            id="refreshAIHistory"
+            class="ai-history-refresh">
+            Refresh
+        </button>
+    </div>
+
+    <div
+        id="aiAnalysisHistory"
+        aria-live="polite">
+        <p class="ai-history-empty">
+            Loading AI analysis history...
+        </p>
+    </div>
+
+</section>
+
+        <!-- Monitoring Status -->
+        <section class="bottom-grid">
+
+            <div class="panel">
+
+                <div class="panel-header">
+                    <div>
+                        <h2>Monitoring Status</h2>
+                        <p>Calculated from saved database records</p>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Healthy Infrastructure</span>
+                        <strong id="healthRate">0%</strong>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"
+                             id="healthBar"
+                             style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Inspection Completion</span>
+                        <strong id="completionRate">0%</strong>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"
+                             id="completionBar"
+                             style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Inspection Records</span>
+                        <strong id="totalInspectionCount">0</strong>
+                    </div>
+                    <p style="font-size: 13px; margin-top: 6px;">
+                        <span id="pendingCount">0</span> pending ·
+                        <span id="inProgressCount">0</span> in progress
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- Recent Alerts -->
+            <div class="panel alert-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <h2>Infrastructure Alerts</h2>
+                        <p>Structures requiring attention</p>
+                    </div>
+                </div>
+
+                <div id="recentAlerts">
+                    <p style="padding: 12px;">Loading alerts...</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <footer>
+            <p>
+                AI Based Smart Infrastructure Monitoring System
+                Â© 2026
+            </p>
+        </footer>
+
+    </main>
+
+</div>
+
+
+<script>
+    const dashboardMessage =
+        document.getElementById("dashboardMessage");
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, function (char) {
+            const replacements = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            };
+
+            return replacements[char];
+        });
+    }
+
+    function setText(id, value) {
+        document.getElementById(id).textContent = value;
+    }
+
+    function setProgress(barId, labelId, percentage) {
+        const safePercentage = Math.max(
+            0,
+            Math.min(100, percentage)
+        );
+
+        document.getElementById(barId).style.width =
+            safePercentage + "%";
+
+        setText(labelId, safePercentage + "%");
+    }
+
+    function formatDate(dateValue) {
+        if (!dateValue) {
+            return "Date not available";
+        }
+
+        const date = new Date(dateValue + "T00:00:00");
+
+        if (Number.isNaN(date.getTime())) {
+            return dateValue;
+        }
+
+        return date.toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        });
+    }
+
+    function getStatusClass(status) {
+        switch (status) {
+            case "Completed":
+            case "Healthy":
+                return "healthy";
+
+            case "Pending":
+            case "In Progress":
+            case "Warning":
+            case "Needs Inspection":
+                return "warning";
+
+            case "Critical":
+                return "danger";
+
+            default:
+                return "warning";
+        }
+    }
+
+    function renderRecentInspections(records) {
+        const container =
+            document.getElementById("recentInspections");
+
+        if (!records.length) {
+            container.innerHTML = `
+                <p style="padding: 16px;">
+                    No inspection records found.
+                    Add an inspection to see it here.
+                </p>
+            `;
+            return;
+        }
+
+        container.innerHTML = records.map(function (record) {
+            const status = record.status || "Pending";
+            const statusClass = getStatusClass(status);
+
+            return `
+                <div class="inspection-row">
+                    <div class="building-icon">&#x1F3E2;</div>
+
+                    <div class="inspection-info">
+                        <strong>
+                            ${escapeHTML(record.building_name)}
+                        </strong>
+
+                        <small>
+                            ${escapeHTML(record.inspection_id)}
+                            · ${escapeHTML(formatDate(record.inspection_date))}
+                        </small>
+
+                        <small>
+                            Inspector: ${escapeHTML(record.inspector_name)}
+                        </small>
+                    </div>
+
+                    <span class="badge ${statusClass}">
+                        ${escapeHTML(status)}
+                    </span>
+                </div>
+            `;
+        }).join("");
+    }
+
+    function renderAlerts(infrastructure) {
+        const container = document.getElementById("recentAlerts");
+        const alerts = [];
+
+        if (infrastructure.critical > 0) {
+            alerts.push({
+                title: "Critical infrastructure",
+                detail: infrastructure.critical +
+                    " structure(s) marked Critical",
+                type: "danger"
+            });
+        }
+
+        if (infrastructure.needs_inspection > 0) {
+            alerts.push({
+                title: "Inspection required",
+                detail: infrastructure.needs_inspection +
+                    " structure(s) need inspection",
+                type: "warning"
+            });
+        }
+
+        if (infrastructure.warning > 0) {
+            alerts.push({
+                title: "Warning status",
+                detail: infrastructure.warning +
+                    " structure(s) marked Warning",
+                type: "warning"
+            });
+        }
+
+        if (!alerts.length) {
+            container.innerHTML = `
+                <div class="alert-item">
+                    <div class="alert-symbol">✓</div>
+                    <div>
+                        <strong>No active status alerts</strong>
+                        <small>
+                            No structures currently require attention.
+                        </small>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = alerts.map(function (alert) {
+            const symbolClass = alert.type === "danger"
+                ? "danger-symbol"
+                : "warning-symbol";
+
+            const symbol = alert.type === "danger" ? "!" : "⚠️";
+
+            return `
+                <div class="alert-item">
+                    <div class="alert-symbol ${symbolClass}">
+                        ${symbol}
+                    </div>
+
+                    <div>
+                        <strong>${escapeHTML(alert.title)}</strong>
+                        <small>${escapeHTML(alert.detail)}</small>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+
+    // ----------------------------------------
+    // AI Image Upload and Preview
+    // ----------------------------------------
+
+    const inspectionImageInput =
+        document.getElementById("inspectionImage");
+
+    const imagePreview =
+        document.getElementById("imagePreview");
+
+    const imagePreviewContainer =
+        document.getElementById("imagePreviewContainer");
+
+    const uploadMessage =
+        document.getElementById("uploadMessage");
+
+    const removeImageButton =
+        document.getElementById("removeImageButton");
+
+    const analyzeImageButton =
+        document.getElementById("analyzeImageButton");
+
+    const analysisLoading =
+        document.getElementById("analysisLoading");
+
+    const aiResult =
+        document.getElementById("aiResult");
+
+    const aiResultMessage =
+        document.getElementById("aiResultMessage");
+
+    const aiResultImages =
+        document.getElementById("aiResultImages");
+
+    const originalResultImage =
+        document.getElementById("originalResultImage");
+
+    const annotatedResultImage =
+        document.getElementById("annotatedResultImage");
+
+    const aiDetectionList =
+        document.getElementById("aiDetectionList");
+
+    let previewObjectUrl = null;
+    let isAnalyzing = false;
+
+    function clearAIResult() {
+        aiResult.hidden = true;
+        aiResultMessage.textContent = "";
+        aiResultMessage.className = "ai-result-message";
+
+        aiResultImages.hidden = true;
+        aiDetectionList.hidden = true;
+        aiDetectionList.replaceChildren();
+
+        originalResultImage.removeAttribute("src");
+        annotatedResultImage.removeAttribute("src");
+    }
+
+    function resetSelectedImage() {
+        inspectionImageInput.value = "";
+
+        imagePreview.removeAttribute("src");
+        imagePreviewContainer.style.display = "none";
+
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(previewObjectUrl);
+            previewObjectUrl = null;
+        }
+
+        uploadMessage.textContent =
+            "Supported formats: JPG, PNG and WEBP. Maximum 5 MB.";
+
+        analyzeImageButton.disabled = true;
+        analyzeImageButton.textContent = "Analyze Image";
+
+        clearAIResult();
+    }
+
+    inspectionImageInput.addEventListener("change", function () {
+        clearAIResult();
+
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(previewObjectUrl);
+            previewObjectUrl = null;
+        }
+
+        const file = this.files && this.files[0];
+
+        if (!file) {
+            imagePreviewContainer.style.display = "none";
+            imagePreview.removeAttribute("src");
+            analyzeImageButton.disabled = true;
+            return;
+        }
+
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            resetSelectedImage();
+            uploadMessage.textContent =
+                "Please choose a valid JPG, PNG or WEBP image.";
+            return;
+        }
+
+        const maxSize = 5 * 1024 * 1024;
+
+        if (file.size > maxSize) {
+            resetSelectedImage();
+            uploadMessage.textContent =
+                "Image size must be 5 MB or less.";
+            return;
+        }
+
+        if (file.size === 0) {
+            resetSelectedImage();
+            uploadMessage.textContent =
+                "The selected image is empty.";
+            return;
+        }
+
+        previewObjectUrl = URL.createObjectURL(file);
+        imagePreview.src = previewObjectUrl;
+
+        imagePreviewContainer.style.display = "block";
+        uploadMessage.textContent = "Selected image: " + file.name;
+
+        analyzeImageButton.disabled = false;
+        analyzeImageButton.textContent = "Analyze Image";
+    });
+
+    removeImageButton.addEventListener("click", function () {
+        if (isAnalyzing) {
+            return;
+        }
+
+        resetSelectedImage();
+    });
+
+
+    // ----------------------------------------
+    // Send Image to Flask AI API
+    // ----------------------------------------
+
+    analyzeImageButton.addEventListener("click", async function () {
+        const file = inspectionImageInput.files &&
+            inspectionImageInput.files[0];
+
+        if (!file || isAnalyzing) {
+            return;
+        }
+
+        isAnalyzing = true;
+        analyzeImageButton.disabled = true;
+        removeImageButton.disabled = true;
+        inspectionImageInput.disabled = true;
+
+        analyzeImageButton.textContent = "Analyzing...";
+        analysisLoading.hidden = false;
+        clearAIResult();
+
+        aiResult.hidden = false;
+        aiResultMessage.textContent =
+            "Uploading image and running the crack-detection model...";
+        aiResultMessage.className = "ai-result-message";
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            const response = await fetch("/api/analyze-image", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json().catch(function () {
+                return {};
+            });
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.error || "The image analysis request failed."
+                );
+            }
+
+            aiResultMessage.textContent = data.message ||
+                "AI analysis completed.";
+
+            aiResultMessage.className =
+                "ai-result-message ai-success";
+
+            originalResultImage.src = data.original_image;
+            annotatedResultImage.src = data.annotated_image;
+
+            aiResultImages.hidden = false;
+
+            const detections = Array.isArray(data.detections)
+                ? data.detections
+                : [];
+
+            aiDetectionList.replaceChildren();
+
+            if (detections.length > 0) {
+                detections.forEach(function (detection, index) {
+                    const item = document.createElement("li");
+
+                    const label = String(detection.label || "Crack");
+                    const confidence = Number(detection.confidence);
+
+                    item.textContent = (
+                        "Detection " + (index + 1) + ": " +
+                        label + " — " +
+                        (Number.isFinite(confidence)
+                            ? confidence.toFixed(2) + "% confidence"
+                            : "confidence unavailable")
+                    );
+
+                    aiDetectionList.appendChild(item);
+                });
+
+                aiDetectionList.hidden = false;
+            } else {
+                const item = document.createElement("li");
+                item.textContent =
+                    "No crack detections were returned by the model.";
+                aiDetectionList.appendChild(item);
+                aiDetectionList.hidden = false;
+            }
+
+            uploadMessage.textContent =
+                "Analysis finished for: " + file.name;
+
+            await loadAIAnalysisHistory();
+
+        } catch (error) {
+            console.error("AI image analysis error:", error);
+
+            aiResultMessage.textContent =
+                error.message ||
+                "Could not analyze this image. Please try again.";
+
+            aiResultMessage.className =
+                "ai-result-message ai-error";
+
+            aiResultImages.hidden = true;
+            aiDetectionList.hidden = true;
+
+        } finally {
+            isAnalyzing = false;
+
+            analysisLoading.hidden = true;
+            analyzeImageButton.disabled =
+                !inspectionImageInput.files ||
+                !inspectionImageInput.files[0];
+
+            removeImageButton.disabled = false;
+            inspectionImageInput.disabled = false;
+
+            analyzeImageButton.textContent = "Analyze Image";
+        }
+    });
+
+
+    // ----------------------------------------
+    // Load Dashboard Data
+    // ----------------------------------------
+// ----------------------------------------
+// Load Recent AI Analysis History
+// ----------------------------------------
+
+function formatDateTime(dateValue) {
+    if (!dateValue) {
+        return "Date not available";
+    }
+
+    const normalizedDate = String(dateValue).replace(" ", "T");
+    const date = new Date(normalizedDate);
+
+    if (Number.isNaN(date.getTime())) {
+        return dateValue;
+    }
+
+    return date.toLocaleString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+async function loadAIAnalysisHistory() {
+    const container = document.getElementById("aiAnalysisHistory");
+
+    try {
+        const response = await fetch("/api/ai-analysis-history", {
+            cache: "no-store"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error("Could not load AI analysis history.");
+        }
+
+        const history = Array.isArray(data.history)
+            ? data.history.slice(0, 10)
+            : [];
+
+        if (history.length === 0) {
+            container.innerHTML = `
+                <p class="ai-history-empty">
+                    No AI analysis records found yet.
+                    Upload an image and analyze it to see results here.
+                </p>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="ai-history-grid">
+                ${history.map(function (record) {
+                    const detections = Array.isArray(record.detections)
+                        ? record.detections
+                        : [];
+
+                    const crackCount = Number(record.crack_count) || 0;
+
+                    const detectionHTML = detections.length
+                        ? detections.map(function (detection, index) {
+                            const confidence = Number(detection.confidence);
+
+                            const confidenceText = Number.isFinite(confidence)
+                                ? confidence.toFixed(2) + "%"
+                                : "Unavailable";
+
+                            return `
+                                <li>
+                                    ${escapeHTML(detection.label || "Crack")}
+                                    — ${escapeHTML(confidenceText)} confidence
+                                </li>
+                            `;
+                        }).join("")
+                        : "<li>No individual detections recorded.</li>";
+
+                    return `
+                        <article class="ai-history-card">
+
+                            <h3>
+                                Analysis ${escapeHTML(record.analysis_id || "")}
+                            </h3>
+
+                            <p class="ai-history-meta">
+                                ${escapeHTML(formatDateTime(record.created_at))}
+                            </p>
+
+                            <span class="ai-history-count">
+                                ${crackCount} possible crack detection(s)
+                            </span>
+
+                            <div class="ai-history-images">
+                                <div>
+                                    <p>Original Image</p>
+                                    <a
+                                        href="${escapeHTML(record.original_image || "")}"
+                                        target="_blank"
+                                        rel="noopener noreferrer">
+                                        <img
+                                            src="${escapeHTML(record.original_image || "")}"
+                                            alt="Original inspection image"
+                                            loading="lazy">
+                                    </a>
+                                </div>
+
+                                <div>
+                                    <p>AI Result</p>
+                                    <a
+                                        href="${escapeHTML(record.annotated_image || "")}"
+                                        target="_blank"
+                                        rel="noopener noreferrer">
+                                        <img
+                                            src="${escapeHTML(record.annotated_image || "")}"
+                                            alt="Image with AI crack detections"
+                                            loading="lazy">
+                                    </a>
+                                </div>
+                            </div>
+
+                            <ul class="ai-history-detections">
+                                ${detectionHTML}
+                            </ul>
+
+                        </article>
+                    `;
+                }).join("")}
+            </div>
+        `;
+
+    } catch (error) {
+        console.error("AI history loading error:", error);
+
+        container.innerHTML = `
+            <p class="ai-history-empty">
+                Unable to load AI analysis history.
+                Please try refreshing.
+            </p>
+        `;
+    }
+}
+
+document.getElementById("refreshAIHistory").addEventListener(
+    "click",
+    loadAIAnalysisHistory
+);
+    async function loadDashboard() {
+        try {
+            const response = await fetch("/api/dashboard", {
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                throw new Error("Dashboard API request failed.");
+            }
+
+            const data = await response.json();
+
+            const infra = data.infrastructure;
+            const inspections = data.inspections;
+
+            const total = infra.total || 0;
+            const healthy = infra.healthy || 0;
+            const totalInspections = inspections.total || 0;
+            const completed = inspections.completed || 0;
+
+            setText("totalStructures", total);
+            setText("healthyStructures", healthy);
+            setText("needsInspection", infra.needs_inspection || 0);
+            setText("criticalStructures", infra.critical || 0);
+            setText("warningCount", "Warnings: " + (infra.warning || 0));
+
+            const healthPercentage = total
+                ? Math.round((healthy / total) * 100)
+                : 0;
+
+            setText(
+                "healthyPercentage",
+                healthPercentage + "% of total structures"
+            );
+
+            setProgress("healthBar", "healthRate", healthPercentage);
+
+            const completionPercentage = totalInspections
+                ? Math.round((completed / totalInspections) * 100)
+                : 0;
+
+            setProgress(
+                "completionBar",
+                "completionRate",
+                completionPercentage
+            );
+
+            setText("totalInspectionCount", totalInspections);
+            setText("pendingCount", inspections.pending || 0);
+            setText("inProgressCount", inspections.in_progress || 0);
+
+            setText(
+                "notificationCount",
+                (infra.critical || 0) +
+                (infra.needs_inspection || 0) +
+                (infra.warning || 0)
+            );
+
+            renderRecentInspections(data.recent_inspections || []);
+            renderAlerts(infra);
+
+            dashboardMessage.textContent =
+                "Dashboard data loaded successfully.";
+
+        } catch (error) {
+            console.error("Dashboard loading error:", error);
+
+            dashboardMessage.textContent =
+                "Could not load dashboard data. Please check that Flask is running and refresh the page.";
+
+            document.getElementById("recentInspections").innerHTML = `
+                <p style="padding: 16px;">
+                    Unable to load inspection records.
+                </p>
+            `;
+
+            document.getElementById("recentAlerts").innerHTML = `
+                <p style="padding: 12px;">
+                    Unable to load alerts.
+                </p>
+            `;
+        }
+    }
+
+    loadDashboard();
+    loadAIAnalysisHistory();
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,547 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts | Smart Infrastructure</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .alerts-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 17px 22px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .alerts-toolbar-left,
+        .alerts-toolbar-right {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .alerts-toolbar label {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .alerts-filter {
+            min-width: 180px;
+            padding: 10px 12px;
+            border: 1px solid #d8dee8;
+            border-radius: 8px;
+            background: #fff;
+            color: var(--text);
+            font-size: 12px;
+        }
+
+        .alerts-filter:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px #dbeafe;
+        }
+
+        .alert-summary-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .alert-summary-card .stat-icon {
+            flex: 0 0 42px;
+            width: 42px;
+            height: 42px;
+            font-size: 20px;
+        }
+
+        .alert-summary-card .stat-copy {
+            min-width: 0;
+        }
+
+        .alert-summary-card .stat-copy p {
+            margin: 2px 0 8px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .alert-summary-card .stat-copy h2 {
+            margin: 0;
+            font-size: 27px;
+            color: #172033;
+        }
+
+        .alert-summary-card .stat-copy small {
+            display: block;
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .alert-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 9px;
+            border-radius: 30px;
+            font-size: 10px;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        .alert-status.status-critical {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .alert-status.status-warning {
+            background: #fff0d6;
+            color: #975600;
+        }
+
+        .alert-status.status-needs-inspection {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .alerts-message {
+            padding: 24px 20px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .alerts-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alerts-table td {
+            vertical-align: middle;
+        }
+
+        .alerts-table .record-id {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 600px) {
+            .alerts-toolbar {
+                align-items: stretch;
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            .alerts-toolbar-left,
+            .alerts-toolbar-right {
+                width: 100%;
+            }
+
+            .alerts-filter {
+                width: 100%;
+            }
+
+            .alerts-toolbar-right .primary-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-box">AI</div>
+            <div>
+                <h2>Smart Infra</h2>
+                <p>Monitoring System</p>
+            </div>
+        </div>
+
+        <nav aria-label="Main navigation">
+            <a href="/">
+                <span class="nav-icon">DB</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="/infrastructure">
+                <span class="nav-icon">IN</span>
+                <span>Infrastructure</span>
+            </a>
+
+            <a href="/inspection">
+                <span class="nav-icon">IS</span>
+                <span>Inspection</span>
+            </a>
+
+            <a href="/alerts" class="active" aria-current="page">
+                <span class="nav-icon">AL</span>
+                <span>Alerts</span>
+            </a>
+
+            <a href="/reports">
+                <span class="nav-icon">RP</span>
+                <span>Reports</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="system-status">
+                <span class="online-dot"></span>
+                <div>
+                    <strong>System Online</strong>
+                    <small>Infrastructure monitoring active</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <p class="welcome">MONITORING CENTER</p>
+                <h1>🚨 Infrastructure Alerts</h1>
+                <p class="description">
+                    Monitor critical structures and infrastructure requiring attention.
+                </p>
+            </div>
+
+            <div class="topbar-right">
+                <div class="profile">
+                    <div class="profile-circle">AI</div>
+                    <div>
+                        <strong>Monitoring System</strong>
+                        <small>Infrastructure Overview</small>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="alertsMessage" class="page-message" role="status"
+             aria-live="polite"></div>
+
+        <!-- ALERT SUMMARY -->
+        <section class="stats-grid" aria-label="Alert summary">
+
+            <article class="stat-card alert-summary-card">
+                <div class="stat-icon red">🚨</div>
+                <div class="stat-copy">
+                    <p>Critical Structures</p>
+                    <h2 id="criticalCount">0</h2>
+                    <small>Require urgent attention</small>
+                </div>
+            </article>
+
+            <article class="stat-card alert-summary-card">
+                <div class="stat-icon orange">⚠️</div>
+                <div class="stat-copy">
+                    <p>Warning Structures</p>
+                    <h2 id="warningCount">0</h2>
+                    <small>Require further monitoring</small>
+                </div>
+            </article>
+
+            <article class="stat-card alert-summary-card">
+                <div class="stat-icon blue">🔍</div>
+                <div class="stat-copy">
+                    <p>Needs Inspection</p>
+                    <h2 id="needsInspectionCount">0</h2>
+                    <small>Inspection is required</small>
+                </div>
+            </article>
+
+            <article class="stat-card alert-summary-card">
+                <div class="stat-icon green">🏗️</div>
+                <div class="stat-copy">
+                    <p>Total Active Alerts</p>
+                    <h2 id="totalAlertsCount">0</h2>
+                    <small>Across all alert categories</small>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- ALERT TABLE -->
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Infrastructure Alert Records</h2>
+                    <p>Review structures that need attention.</p>
+                </div>
+                <span class="record-count" id="recordCount">0 records</span>
+            </div>
+
+            <div class="alerts-toolbar">
+                <div class="alerts-toolbar-left">
+                    <label for="statusFilter">Filter by status</label>
+                    <select id="statusFilter" class="alerts-filter">
+                        <option value="all">All Alert Types</option>
+                        <option value="Critical">Critical</option>
+                        <option value="Warning">Warning</option>
+                        <option value="Needs Inspection">Needs Inspection</option>
+                    </select>
+                </div>
+
+                <div class="alerts-toolbar-right">
+                    <button type="button" class="primary-btn"
+                            id="refreshAlerts">
+                        🔄 Refresh Alerts
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table class="alerts-table">
+                    <thead>
+                        <tr>
+                            <th>Infrastructure ID</th>
+                            <th>Structure Name</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Condition</th>
+                            <th>Last Inspection</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="alertsTableBody">
+                        <tr>
+                            <td colspan="6" class="alerts-message">
+                                Loading infrastructure alerts...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>
+            AI Based Smart Infrastructure Monitoring System
+        </footer>
+
+    </main>
+</div>
+
+<script>
+    const alertsTableBody = document.getElementById("alertsTableBody");
+    const statusFilter = document.getElementById("statusFilter");
+    const refreshAlertsButton = document.getElementById("refreshAlerts");
+    const alertsMessage = document.getElementById("alertsMessage");
+
+    let infrastructureRecords = [];
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, function (char) {
+            const replacements = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            };
+            return replacements[char];
+        });
+    }
+
+    function normalizeStatus(status) {
+        return String(status ?? "")
+            .trim()
+            .toLowerCase()
+            .replace(/[_-]+/g, " ")
+            .replace(/\s+/g, " ");
+    }
+
+    function getAlertType(status) {
+        const normalized = normalizeStatus(status);
+
+        if (normalized === "critical") {
+            return "Critical";
+        }
+
+        if (normalized === "warning") {
+            return "Warning";
+        }
+
+        if (
+            normalized === "needs inspection" ||
+            normalized === "needsinspection"
+        ) {
+            return "Needs Inspection";
+        }
+
+        return null;
+    }
+
+    function statusClass(status) {
+        const alertType = getAlertType(status);
+
+        if (alertType === "Critical") {
+            return "status-critical";
+        }
+
+        if (alertType === "Warning") {
+            return "status-warning";
+        }
+
+        if (alertType === "Needs Inspection") {
+            return "status-needs-inspection";
+        }
+
+        return "";
+    }
+
+    function showMessage(message, type = "") {
+        alertsMessage.textContent = message;
+        alertsMessage.className = "page-message";
+
+        if (type) {
+            alertsMessage.classList.add(type);
+        }
+    }
+
+    function renderAlerts() {
+        const alertRecords = infrastructureRecords.filter(function (record) {
+            return getAlertType(record.status) !== null;
+        });
+
+        const criticalCount = alertRecords.filter(
+            record => getAlertType(record.status) === "Critical"
+        ).length;
+
+        const warningCount = alertRecords.filter(
+            record => getAlertType(record.status) === "Warning"
+        ).length;
+
+        const needsInspectionCount = alertRecords.filter(
+            record => getAlertType(record.status) === "Needs Inspection"
+        ).length;
+
+        document.getElementById("criticalCount").textContent = criticalCount;
+        document.getElementById("warningCount").textContent = warningCount;
+        document.getElementById("needsInspectionCount").textContent =
+            needsInspectionCount;
+        document.getElementById("totalAlertsCount").textContent =
+            alertRecords.length;
+
+        const selectedStatus = statusFilter.value;
+
+        const filteredRecords = alertRecords.filter(function (record) {
+            if (selectedStatus === "all") {
+                return true;
+            }
+
+            return getAlertType(record.status) === selectedStatus;
+        });
+
+        document.getElementById("recordCount").textContent =
+            `${filteredRecords.length} record${filteredRecords.length === 1 ? "" : "s"}`;
+
+        if (filteredRecords.length === 0) {
+            alertsTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="alerts-message">
+                        ${alertRecords.length === 0
+                            ? "✅ No active infrastructure alerts. All structures are outside the alert categories."
+                            : "No alerts match the selected status filter."}
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        alertsTableBody.innerHTML = filteredRecords.map(function (record) {
+            const alertType = getAlertType(record.status);
+
+            return `
+                <tr>
+                    <td>
+                        <span class="record-id">
+                            ${escapeHTML(record.infrastructure_id || "—")}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="building-name">
+                            ${escapeHTML(record.name || "Unnamed structure")}
+                        </span>
+                    </td>
+                    <td>${escapeHTML(record.location || "—")}</td>
+                    <td>
+                        <span class="alert-status ${statusClass(alertType)}">
+                            ${alertType === "Critical" ? "🚨" :
+                              alertType === "Warning" ? "⚠️" : "🔍"}
+                            ${escapeHTML(alertType)}
+                        </span>
+                    </td>
+                    <td>${escapeHTML(record.condition || "—")}</td>
+                    <td>${escapeHTML(record.last_inspection || "Not recorded")}</td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    async function loadAlerts() {
+        refreshAlertsButton.disabled = true;
+        refreshAlertsButton.textContent = "⏳ Loading...";
+        showMessage("");
+
+        try {
+            const response = await fetch("/api/infrastructures", {
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to load infrastructure records.");
+            }
+
+            const data = await response.json();
+
+            if (!Array.isArray(data)) {
+                throw new Error("The server returned an unexpected data format.");
+            }
+
+            infrastructureRecords = data;
+            renderAlerts();
+
+        } catch (error) {
+            alertsTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="alerts-message error">
+                        Unable to load alerts. Please check the server and try again.
+                    </td>
+                </tr>
+            `;
+
+            document.getElementById("criticalCount").textContent = "—";
+            document.getElementById("warningCount").textContent = "—";
+            document.getElementById("needsInspectionCount").textContent = "—";
+            document.getElementById("totalAlertsCount").textContent = "—";
+            document.getElementById("recordCount").textContent = "Unavailable";
+
+            showMessage(error.message, "error");
+        } finally {
+            refreshAlertsButton.disabled = false;
+            refreshAlertsButton.textContent = "🔄 Refresh Alerts";
+        }
+    }
+
+    statusFilter.addEventListener("change", renderAlerts);
+    refreshAlertsButton.addEventListener("click", loadAlerts);
+
+    loadAlerts();
+</script>
+
+</body>
+</html>

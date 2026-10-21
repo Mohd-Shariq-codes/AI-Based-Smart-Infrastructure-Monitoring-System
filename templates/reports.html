@@ -1,0 +1,634 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reports | Smart Infrastructure</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .report-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .secondary-btn {
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: var(--surface);
+            color: var(--text);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .secondary-btn:hover {
+            background: var(--background);
+        }
+
+        .report-section {
+            margin-bottom: 24px;
+        }
+
+        .report-section .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .report-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 13px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .report-table th {
+            background: var(--background);
+            color: var(--muted);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .report-table td {
+            color: var(--text);
+        }
+
+        .report-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .report-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .report-status.completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .report-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .report-status.progress {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .report-status.critical {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .report-status.default {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .report-message {
+            padding: 12px 15px;
+            margin-bottom: 18px;
+            border-radius: 9px;
+            background: var(--background);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .report-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .report-generated {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .report-empty {
+            padding: 24px !important;
+            text-align: center !important;
+            color: var(--muted) !important;
+        }
+
+        .report-card .stat-icon {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 600px) {
+            .report-toolbar {
+                align-items: stretch;
+            }
+
+            .report-actions {
+                width: 100%;
+            }
+
+            .report-actions button {
+                flex: 1;
+            }
+        }
+
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 12mm;
+            }
+
+            body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+
+            .sidebar,
+            .report-actions,
+            .no-print {
+                display: none !important;
+            }
+
+            .dashboard {
+                display: block !important;
+                min-height: 0 !important;
+            }
+
+            .main-content {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .topbar {
+                margin-bottom: 18px !important;
+            }
+
+            .stat-card,
+            .panel,
+            .report-section {
+                box-shadow: none !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .stats-grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                gap: 10px !important;
+            }
+
+            .report-table-wrapper {
+                overflow: visible !important;
+            }
+
+            .report-table {
+                min-width: 0 !important;
+            }
+
+            .report-table th,
+            .report-table td {
+                padding: 8px !important;
+                font-size: 10px !important;
+            }
+
+            .report-section {
+                break-inside: auto;
+            }
+
+            .report-table tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .report-message {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <div class="logo-box">AI</div>
+            <div>
+                <h2>Smart Infra</h2>
+                <p>Monitoring System</p>
+            </div>
+        </div>
+
+        <nav>
+            <a href="/">
+                <span class="nav-icon">DB</span>
+                Dashboard
+            </a>
+
+            <a href="/infrastructure">
+                <span class="nav-icon">IN</span>
+                Infrastructure
+            </a>
+
+            <a href="/inspection">
+                <span class="nav-icon">IS</span>
+                Inspection
+            </a>
+
+            <a href="/alerts">
+                <span class="nav-icon">AL</span>
+                Alerts
+            </a>
+
+            <a href="/reports" class="active">
+                <span class="nav-icon">RP</span>
+                Reports
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="system-status">
+                <span class="online-dot"></span>
+                System Online
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <header class="topbar">
+            <div class="welcome">
+                <h1>📊 Reports & Analytics</h1>
+                <p class="description">
+                    Review infrastructure conditions and inspection activity.
+                </p>
+            </div>
+        </header>
+
+        <!-- ACTIONS -->
+        <div class="report-toolbar no-print">
+            <div>
+                <span class="report-generated" id="reportGenerated">
+                    Preparing report...
+                </span>
+            </div>
+
+            <div class="report-actions">
+                <button type="button"
+                        class="secondary-btn"
+                        id="refreshReport">
+                    🔄 Refresh Report
+                </button>
+
+                <button type="button"
+                        class="primary-btn"
+                        id="printReport">
+                    🖨️ Print Report
+                </button>
+            </div>
+        </div>
+
+        <div id="reportMessage"
+             class="report-message"
+             role="status"
+             aria-live="polite">
+            Loading report data...
+        </div>
+
+        <!-- INFRASTRUCTURE SUMMARY -->
+        <section class="report-section">
+            <div class="panel-header" style="margin-bottom: 16px;">
+                <h2>🏢 Infrastructure Summary</h2>
+            </div>
+
+            <div class="stats-grid">
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>Total Structures</p>
+                        <h2 id="totalStructures">—</h2>
+                    </div>
+                    <div class="stat-icon blue">🏢</div>
+                </div>
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>Healthy</p>
+                        <h2 id="healthyStructures">—</h2>
+                    </div>
+                    <div class="stat-icon green">✅</div>
+                </div>
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>Needs Inspection</p>
+                        <h2 id="needsInspection">—</h2>
+                    </div>
+                    <div class="stat-icon orange">🔍</div>
+                </div>
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>Warning</p>
+                        <h2 id="warningStructures">—</h2>
+                    </div>
+                    <div class="stat-icon orange">⚠️</div>
+                </div>
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>Critical Structures</p>
+                        <h2 id="criticalStructures">—</h2>
+                    </div>
+                    <div class="stat-icon red">🚨</div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- INSPECTION SUMMARY -->
+        <section class="report-section">
+            <div class="panel-header" style="margin-bottom: 16px;">
+                <h2>📝 Inspection Summary</h2>
+            </div>
+
+            <div class="stats-grid">
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>Total Inspections</p>
+                        <h2 id="totalInspections">—</h2>
+                    </div>
+                    <div class="stat-icon blue">📋</div>
+                </div>
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>Completed</p>
+                        <h2 id="completedInspections">—</h2>
+                    </div>
+                    <div class="stat-icon green">✔️</div>
+                </div>
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>Pending</p>
+                        <h2 id="pendingInspections">—</h2>
+                    </div>
+                    <div class="stat-icon orange">⏳</div>
+                </div>
+
+                <div class="stat-card report-card">
+                    <div>
+                        <p>In Progress</p>
+                        <h2 id="inProgressInspections">—</h2>
+                    </div>
+                    <div class="stat-icon blue">🔄</div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- INSPECTION DETAILS -->
+        <section class="panel report-section">
+
+            <div class="panel-header">
+                <div>
+                    <h2>📑 Inspection Records</h2>
+                    <p class="description">
+                        Latest inspection records from the database.
+                    </p>
+                </div>
+            </div>
+
+            <div class="report-table-wrapper">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Inspection ID</th>
+                            <th>Building</th>
+                            <th>Date</th>
+                            <th>Inspector</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="inspectionReportBody">
+                        <tr>
+                            <td colspan="6" class="report-empty">
+                                Loading inspection records...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script>
+    const reportMessage = document.getElementById("reportMessage");
+    const inspectionReportBody =
+        document.getElementById("inspectionReportBody");
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, function (char) {
+            const entities = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            };
+
+            return entities[char];
+        });
+    }
+
+    function setReportValue(id, value) {
+        document.getElementById(id).textContent =
+            value === null || value === undefined ? 0 : value;
+    }
+
+    function normalizeStatus(status) {
+        return String(status ?? "").trim().toLowerCase();
+    }
+
+    function getStatusClass(status) {
+        const normalized = normalizeStatus(status);
+
+        if (normalized === "completed") return "completed";
+        if (normalized === "pending") return "pending";
+        if (normalized === "in progress") return "progress";
+        if (normalized === "critical") return "critical";
+
+        return "default";
+    }
+
+    function showReportMessage(message, isError = false) {
+        reportMessage.textContent = message;
+        reportMessage.classList.toggle("error", isError);
+    }
+
+    function renderInspectionRecords(records) {
+        if (!Array.isArray(records) || records.length === 0) {
+            inspectionReportBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="report-empty">
+                        No inspection records found. Add an inspection
+                        to see it in this report.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        inspectionReportBody.innerHTML = records.map(function (record) {
+            const status = record.status || "Unknown";
+            const statusClass = getStatusClass(status);
+
+            return `
+                <tr>
+                    <td>${escapeHTML(record.inspection_id || "—")}</td>
+                    <td>${escapeHTML(record.building_name || "—")}</td>
+                    <td>${escapeHTML(record.inspection_date || "—")}</td>
+                    <td>${escapeHTML(record.inspector_name || "—")}</td>
+                    <td>
+                        <span class="report-status ${statusClass}">
+                            ${escapeHTML(status)}
+                        </span>
+                    </td>
+                    <td>${escapeHTML(record.notes || "—")}</td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    async function loadReport() {
+        const refreshButton = document.getElementById("refreshReport");
+
+        refreshButton.disabled = true;
+        refreshButton.textContent = "⏳ Loading...";
+        showReportMessage("Loading the latest report data...");
+
+        try {
+            const responses = await Promise.all([
+                fetch("/api/dashboard", { cache: "no-store" }),
+                fetch("/api/inspections", { cache: "no-store" })
+            ]);
+
+            if (!responses[0].ok || !responses[1].ok) {
+                throw new Error("The server could not load report data.");
+            }
+
+            const dashboardData = await responses[0].json();
+            const inspectionRecords = await responses[1].json();
+
+            if (!Array.isArray(inspectionRecords)) {
+                throw new Error("Inspection records have an unexpected format.");
+            }
+
+            const infrastructure = dashboardData.infrastructure || {};
+            const inspections = dashboardData.inspections || {};
+
+            setReportValue("totalStructures", infrastructure.total);
+            setReportValue("healthyStructures", infrastructure.healthy);
+            setReportValue("needsInspection", infrastructure.needs_inspection);
+            setReportValue("warningStructures", infrastructure.warning);
+            setReportValue("criticalStructures", infrastructure.critical);
+
+            setReportValue("totalInspections", inspections.total);
+            setReportValue("completedInspections", inspections.completed);
+            setReportValue("pendingInspections", inspections.pending);
+            setReportValue("inProgressInspections", inspections.in_progress);
+
+            renderInspectionRecords(inspectionRecords);
+
+            document.getElementById("reportGenerated").textContent =
+                "Last updated: " + new Date().toLocaleString("en-IN");
+
+            showReportMessage(
+                "Report loaded successfully. Data is connected to your database."
+            );
+
+        } catch (error) {
+            console.error("Report loading error:", error);
+
+            showReportMessage(
+                "Unable to load the report. Check that Flask is running and the report APIs are working.",
+                true
+            );
+
+            inspectionReportBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="report-empty">
+                        Inspection records could not be loaded.
+                    </td>
+                </tr>
+            `;
+
+        } finally {
+            refreshButton.disabled = false;
+            refreshButton.textContent = "🔄 Refresh Report";
+        }
+    }
+
+    document.getElementById("refreshReport").addEventListener(
+        "click",
+        loadReport
+    );
+
+    document.getElementById("printReport").addEventListener(
+        "click",
+        function () {
+            window.print();
+        }
+    );
+
+    loadReport();
+</script>
+
+</body>
+</html>
