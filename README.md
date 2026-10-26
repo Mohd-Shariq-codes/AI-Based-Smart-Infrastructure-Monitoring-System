@@ -373,11 +373,3 @@ Potential future development work includes:
 This project demonstrates the integration of a Python web application, relational database storage, and a trained computer vision model for infrastructure inspection workflows.
 
 ---
-
-## Publication Checklist
-
-- [ ] Replace all `[TODO: ...]` entries with verified information.
-- [ ] Add the four screenshots to the `screenshots/` directory.
-- [ ] Confirm the exact YOLO model variant and task.
-- [ ] Verify dataset details, training configuration, and validation metrics.
-- [ ] Confirm that all documented features and setup instructions match the current implementation.
